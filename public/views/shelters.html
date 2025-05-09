@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <!-- Metadata and stylesheets -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İlanlar - PawFinder</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/navbar.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/shelters.css">
+</head>
+<body>
+    <!-- Main container -->
+    <div class="container">
+        <h1>Hayvan İlanları</h1>
+
+        <!-- Search and filter section -->
+        <div class="search-filters">
+            <input type="text" id="searchInput" placeholder="İlan ara...">
+            <select id="locationFilter">
+                <!-- Dropdown for city selection -->
+                <option value="">Tüm Şehirler</option>
+                <option value="adana">Adana</option>
+                <option value="adiyaman">Adıyaman</option>
+                <option value="afyonkarahisar">Afyonkarahisar</option>
+                <option value="agri">Ağrı</option>
+                <option value="amasya">Amasya</option>
+                <option value="ankara">Ankara</option>
+                <option value="antalya">Antalya</option>
+                <option value="artvin">Artvin</option>
+                <option value="aydin">Aydın</option>
+                <option value="balikesir">Balıkesir</option>
+                <option value="bilecik">Bilecik</option>
+                <option value="bingol">Bingöl</option>
+                <option value="bitlis">Bitlis</option>
+                <option value="bolu">Bolu</option>
+                <option value="burdur">Burdur</option>
+                <option value="bursa">Bursa</option>
+                <option value="canakkale">Çanakkale</option>
+                <option value="cankiri">Çankırı</option>
+                <option value="corum">Çorum</option>
+                <option value="denizli">Denizli</option>
+                <option value="diyarbakir">Diyarbakır</option>
+                <option value="edirne">Edirne</option>
+                <option value="elazig">Elazığ</option>
+                <option value="erzincan">Erzincan</option>
+                <option value="erzurum">Erzurum</option>
+                <option value="eskisehir">Eskişehir</option>
+                <option value="gaziantep">Gaziantep</option>
+                <option value="giresun">Giresun</option>
+                <option value="gumushane">Gümüşhane</option>
+                <option value="hakkari">Hakkari</option>
+                <option value="hatay">Hatay</option>
+                <option value="isparta">Isparta</option>
+                <option value="mersin">Mersin</option>
+                <option value="istanbul">İstanbul</option>
+                <option value="izmir">İzmir</option>
+                <option value="kars">Kars</option>
+                <option value="kastamonu">Kastamonu</option>
+                <option value="kayseri">Kayseri</option>
+                <option value="kirklareli">Kırklareli</option>
+                <option value="kirsehir">Kırşehir</option>
+                <option value="kocaeli">Kocaeli</option>
+                <option value="konya">Konya</option>
+                <option value="kutahya">Kütahya</option>
+                <option value="malatya">Malatya</option>
+                <option value="manisa">Manisa</option>
+                <option value="kahramanmaras">Kahramanmaraş</option>
+                <option value="mardin">Mardin</option>
+                <option value="mugla">Muğla</option>
+                <option value="mus">Muş</option>
+                <option value="nevsehir">Nevşehir</option>
+                <option value="nigde">Niğde</option>
+                <option value="ordu">Ordu</option>
+                <option value="rize">Rize</option>
+                <option value="sakarya">Sakarya</option>
+                <option value="samsun">Samsun</option>
+                <option value="siirt">Siirt</option>
+                <option value="sinop">Sinop</option>
+                <option value="sivas">Sivas</option>
+                <option value="tekirdag">Tekirdağ</option>
+                <option value="tokat">Tokat</option>
+                <option value="trabzon">Trabzon</option>
+                <option value="tunceli">Tunceli</option>
+                <option value="sanliurfa">Şanlıurfa</option>
+                <option value="usak">Uşak</option>
+                <option value="van">Van</option>
+                <option value="yozgat">Yozgat</option>
+                <option value="zonguldak">Zonguldak</option>
+                <option value="aksaray">Aksaray</option>
+                <option value="bayburt">Bayburt</option>
+                <option value="karaman">Karaman</option>
+                <option value="kirikkale">Kırıkkale</option>
+                <option value="batman">Batman</option>
+                <option value="sirnak">Şırnak</option>
+                <option value="bartin">Bartın</option>
+                <option value="ardahan">Ardahan</option>
+                <option value="igdir">Iğdır</option>
+                <option value="yalova">Yalova</option>
+                <option value="karabuk">Karabük</option>
+                <option value="kilis">Kilis</option>
+                <option value="osmaniye">Osmaniye</option>
+                <option value="duzce">Düzce</option>
+            </select>
+            <button onclick="filterAds()">Ara</button>
+        </div>
+        
+        <!-- Dynamic ads container -->
+        <div id="adsContainer" class="shelters-grid">
+            <!-- Ads will be dynamically added here -->
+        </div>
+    </div>
+
+    <!-- Notifications container -->
+    <div class="notification-container"></div>
+
+    <!-- JavaScript files -->
+    <script src="../js/navbar.js"></script>
+    <script src="../js/notification.js"></script>
+    <script>
+        // Tarih formatını okunabilir bir hale getiren fonksiyon
+        function formatDate(dateString) {
+            const options = { 
+                year: 'numeric', // Yıl bilgisi
+                month: 'long',   // Ay bilgisi (tam isim)
+                day: 'numeric'   // Gün bilgisi
+            };
+            return new Date(dateString).toLocaleDateString('tr-TR', options); // Türkçe formatta döndürür
+        }
+
+        // Türkçe karakterleri normalize ederek küçük harfe çeviren fonksiyon
+        function turkishToLower(str) {
+            return str
+                .replace(/İ/g, 'i') // Büyük İ harfini küçük i'ye çevirir
+                .replace(/I/g, 'ı') // Büyük I harfini küçük ı'ye çevirir
+                .replace(/Ş/g, 'ş') // Büyük Ş harfini küçük ş'ye çevirir
+                .replace(/Ğ/g, 'ğ') // Büyük Ğ harfini küçük ğ'ye çevirir
+                .replace(/Ü/g, 'ü') // Büyük Ü harfini küçük ü'ye çevirir
+                .replace(/Ö/g, 'ö') // Büyük Ö harfini küçük ö'ye çevirir
+                .replace(/Ç/g, 'ç') // Büyük Ç harfini küçük ç'ye çevirir
+                .toLowerCase();     // Geri kalan tüm harfleri küçük harfe çevirir
+        }
+
+        // API'den ilanları dinamik olarak yükleyen fonksiyon
+        async function loadAds() {
+            try {
+                const response = await fetch('/api/ads'); // İlanları API'den çeker
+                const ads = await response.json(); // JSON formatında yanıtı alır
+                
+                const container = document.getElementById('adsContainer'); // İlanların ekleneceği konteyner
+                container.innerHTML = ''; // Önceki içerikleri temizler
+                
+                const user = JSON.parse(localStorage.getItem('user') || '{}'); // Kullanıcı bilgilerini alır
+                const isRegularUser = user.isAdmin === 0 && user.role === 'user'; // Kullanıcının normal bir kullanıcı olup olmadığını kontrol eder
+                
+                for (const ad of ads) {
+                    const card = document.createElement('div'); // Yeni bir ilan kartı oluşturur
+                    card.className = 'shelter-card'; // Kartın CSS sınıfını ayarlar
+                    card.dataset.location = ad.bulundugu_yer.toLowerCase(); // Şehir bilgisini veri özelliği olarak ekler
+                    
+                    let favoriteButton = '';
+                    if (isRegularUser) { // Eğer kullanıcı normal bir kullanıcıysa favori butonunu ekler
+                        const isFavorited = await checkIfFavorited(ad._id); // İlanın favorilere eklenip eklenmediğini kontrol eder
+                        favoriteButton = `
+                            <button class="favorite-btn ${isFavorited ? 'active' : ''}" onclick="toggleFavorite('${ad._id}', this)">
+                                <i class="fas fa-heart"></i>
+                            </button>
+                        `;
+                    }
+                    
+                    // İlan kartının içeriğini oluşturur
+                    card.innerHTML = `
+                        <div class="ad-actions">
+                            ${favoriteButton} <!-- Favori butonu -->
+                        </div>
+                        <img src="${ad.resim_url}" alt="${ad.cins}" class="ad-image"> <!-- İlan resmi -->
+                        <div class="shelter-card-content">
+                            <h3>${ad.cins}</h3> <!-- Hayvan cinsi -->
+                            <div class="ad-info">
+                                <span><i class="fas fa-map-marker-alt"></i> ${ad.bulundugu_yer}</span> <!-- Bulunduğu yer -->
+                                <span><i class="fas fa-birthday-cake"></i> ${ad.yas} yaşında</span> <!-- Yaşı -->
+                                <span><i class="fas fa-venus-mars"></i> ${ad.cinsiyet}</span> <!-- Cinsiyeti -->
+                                <span><i class="fa-solid fa-user"></i> ${ad.olusturanAd}</span> <!-- İlanı oluşturan kişi -->
+                            </div>
+                            <div class="ad-date">
+                                <span><i class="fas fa-calendar"></i> ${formatDate(ad.createdAt)}</span> <!-- Oluşturulma tarihi -->
+                            </div>
+                            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                                <a href="/views/ad-detay?id=${ad.ilan_no}" class="btn btn-primary">Detayları Gör</a> <!-- Detay butonu -->
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card); // Kartı konteynere ekler
+                }
+            } catch (error) {
+                console.error('İlanlar yüklenirken hata oluştu:', error); // Hata durumunda konsola yazdırır
+            }
+        }
+
+        // Bir ilan favorilere eklenmiş mi kontrol eden fonksiyon
+        async function checkIfFavorited(adId) {
+            try {
+                const token = localStorage.getItem('token'); // Kullanıcı token'ını alır
+                if (!token) return false; // Token yoksa false döner
+
+                const response = await fetch(`/api/favorites/check/${adId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}` // Yetkilendirme başlığı ekler
+                    }
+                });
+
+                if (!response.ok) return false; // Yanıt başarılı değilse false döner
+                const data = await response.json();
+                return data.isFavorited; // Favori durumunu döner
+            } catch (error) {
+                console.error('Favori kontrolü yapılırken hata:', error); // Hata durumunda konsola yazdırır
+                return false;
+            }
+        }
+
+        // Bir ilanı favorilere ekleyen veya çıkaran fonksiyon
+        async function toggleFavorite(adId, button) {
+            try {
+                const token = localStorage.getItem('token'); // Kullanıcı token'ını alır
+                if (!token) {
+                    window.location.href = '/views/login'; // Token yoksa giriş sayfasına yönlendirir
+                    return;
+                }
+
+                const isFavorited = button.classList.contains('active'); // İlanın favorilere eklenip eklenmediğini kontrol eder
+                const method = isFavorited ? 'DELETE' : 'POST'; // Favori durumuna göre HTTP metodunu belirler
+                const url = `/api/favorites/${adId}`; // API URL'si
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Authorization': `Bearer ${token}` // Yetkilendirme başlığı ekler
+                    }
+                });
+
+                if (response.ok) {
+                    button.classList.toggle('active'); // Favori durumunu değiştirir
+                    const message = isFavorited ? 'Favorilerden kaldırıldı' : 'Favorilere eklendi'; // Mesajı belirler
+                    notifications.success(message, 'Başarılı'); // Başarı mesajını gösterir
+                } else {
+                    const data = await response.json();
+                    notifications.error(data.message || 'Bir hata oluştu', 'Hata'); // Hata mesajını gösterir
+                }
+            } catch (error) {
+                console.error('Favori işlemi sırasında hata:', error); // Hata durumunda konsola yazdırır
+                notifications.error('Bir hata oluştu', 'Hata'); // Hata mesajını gösterir
+            }
+        }
+
+        // İlanları arama ve filtreleme fonksiyonu
+        async function filterAds() {
+            try {
+                const searchInput = document.getElementById('searchInput').value.toLowerCase(); // Arama kutusundaki değeri alır
+                const locationFilter = document.getElementById('locationFilter').value.toLowerCase(); // Şehir filtresini alır
+
+                const response = await fetch('/api/ads'); // İlanları API'den çeker
+                const ads = await response.json();
+
+                const container = document.getElementById('adsContainer'); // İlanların ekleneceği konteyner
+                container.innerHTML = ''; // Önceki içerikleri temizler
+
+                const filteredAds = ads.filter(ad => {
+                    const adCity = turkishToLower(ad.bulundugu_yer.split(',').pop().trim()); // Şehir bilgisini normalize eder
+                    const normalizedLocation = turkishToLower(locationFilter); // Filtreyi normalize eder
+                    const matchesLocation = !locationFilter || adCity === normalizedLocation; // Şehir eşleşmesini kontrol eder
+                    const matchesSearch = !searchInput || 
+                        ad.cins.toLowerCase().includes(searchInput) || // Cins eşleşmesi
+                        ad.bulundugu_yer.toLowerCase().includes(searchInput) || // Yer eşleşmesi
+                        ad.cinsiyet.toLowerCase().includes(searchInput); // Cinsiyet eşleşmesi
+                    return matchesLocation && matchesSearch; // Tüm koşulları kontrol eder
+                });
+
+                if (filteredAds.length === 0) {
+                    container.innerHTML = '<p class="no-results">Sonuç bulunamadı.</p>'; // Sonuç yoksa mesaj gösterir
+                    return;
+                }
+
+                filteredAds.forEach(ad => {
+                    const card = document.createElement('div'); // Yeni bir ilan kartı oluşturur
+                    card.className = 'shelter-card';
+
+                    card.innerHTML = `
+                        <img src="${ad.resim_url}" alt="${ad.cins}" class="ad-image"> <!-- İlan resmi -->
+                        <div class="shelter-card-content">
+                            <h3>${ad.cins}</h3> <!-- Hayvan cinsi -->
+                            <div class="ad-info">
+                                <span><i class="fas fa-map-marker-alt"></i> ${ad.bulundugu_yer}</span> <!-- Bulunduğu yer -->
+                                <span><i class="fas fa-birthday-cake"></i> ${ad.yas} yaşında</span> <!-- Yaşı -->
+                                <span><i class="fas fa-venus-mars"></i> ${ad.cinsiyet}</span> <!-- Cinsiyeti -->
+                                <span><i class="fa-solid fa-user"></i> ${ad.olusturanAd}</span> <!-- İlanı oluşturan kişi -->
+                            </div>
+                            <div class="ad-date">
+                                <span><i class="fas fa-calendar"></i> ${formatDate(ad.createdAt)}</span> <!-- Oluşturulma tarihi -->
+                            </div>
+                            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                                <a href="/views/ad-detay?id=${ad.ilan_no}" class="btn btn-primary">Detayları Gör</a> <!-- Detay butonu -->
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card); // Kartı konteynere ekler
+                });
+            } catch (error) {
+                console.error('İlanlar filtrelenirken hata oluştu:', error); // Hata durumunda konsola yazdırır
+            }
+        }
+
+        // Sayfa yüklendiğinde ilanları yükleme işlemini başlatır
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAds();
+        });
+    </script>
+</body>
+</html>

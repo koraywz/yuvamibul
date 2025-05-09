@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Detayı - PawFinder</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/navbar.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/blog-detail.css">
+</head>
+<body>
+    <div class="container">
+        <div class="blog-detail-container">
+            <a id="backButton" href="/views/blog.html" class="back-button">
+                <i class="fas fa-arrow-left"></i> Blog Listesine Dön
+            </a>
+            <div id="blogContent">
+                <!-- Blog içeriği buraya dinamik olarak eklenecek -->
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="notification-container"></div>
+
+    <script src="../js/navbar.js"></script>
+    <script src="../js/notification.js"></script>
+    <script>
+        async function loadBlogDetail() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const blogNo = urlParams.get('id');
+
+            if (!blogNo) {
+                notifications.error('Blog bulunamadı!', 'Hata');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/blogs/${blogNo}`);
+                const blog = await response.json();
+
+                if (!response.ok) {
+                    notifications.error('Blog detayları yüklenirken bir hata oluştu.', 'Yükleme Hatası');
+                    return;
+                }
+
+                const blogContent = document.getElementById('blogContent');
+                blogContent.innerHTML = `
+                    <div class="blog-header">
+                        <h1 class="blog-title">${blog.title}</h1>
+                        <div class="blog-meta">
+                            <div class="blog-meta-item">
+                                <i class="fas fa-calendar"></i>
+                                <span>Oluşturulma: ${formatDate(blog.createdAt)}</span>
+                            </div>
+                            <div class="blog-meta-item">
+                                <i class="fas fa-edit"></i>
+                                <span>Son Güncelleme: ${formatDate(blog.updatedAt)}</span>
+                            </div>
+                            <div class="blog-meta-item">
+                                <i class="fa-solid fa-user"></i>
+                                <span>${blog.olusturanAd || blog.olusturan}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <img src="${blog.imageUrl}" alt="${blog.title}" class="blog-image">
+                    <div class="blog-description">
+                        ${blog.description}
+                    </div>
+                    <div class="blog-content">
+                        ${blog.content}
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Blog detayı yüklenirken hata:', error);
+                notifications.error('Blog detayları yüklenirken bir hata oluştu.', 'Sistem Hatası');
+            }
+        }
+
+        function formatDate(dateString) {
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return new Date(dateString).toLocaleDateString('tr-TR', options);
+        }
+
+        function setBackButton() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const referer = urlParams.get('referer');
+            const backButton = document.getElementById('backButton');
+            if (!backButton) return;
+            if (referer === 'index') {
+                backButton.href = '/views/index.html';
+                backButton.innerHTML = '<i class="fas fa-arrow-left"></i> Anasayfaya Dön';
+            } else if (referer === 'blog') {
+                backButton.href = '/views/blog.html';
+                backButton.innerHTML = '<i class="fas fa-arrow-left"></i> Blog Listesine Dön';
+            } else {
+                backButton.href = '/views/blog.html';
+                backButton.innerHTML = '<i class="fas fa-arrow-left"></i> Blog Listesine Dön';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            setBackButton();
+            loadBlogDetail();
+        });
+    </script>
+</body>
+</html>

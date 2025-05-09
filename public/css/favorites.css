@@ -1,0 +1,148 @@
+
+        .favorites-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .favorites-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .favorites-header h1 {
+            color: #374151;
+            font-size: 1.8rem;
+        }
+
+        .shelters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            padding: 2rem 0;
+        }
+
+        .shelter-card {
+            background: white;
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+            position: relative;
+        }
+
+        .shelter-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .shelter-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .shelter-card-content {
+            padding: 1.5rem;
+        }
+
+        .shelter-card-content h3 {
+            margin: 0 0 0.5rem 0;
+            color: #374151;
+        }
+
+        .ad-info {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 0.5rem 0;
+            color: #6b7280;
+        }
+
+        .ad-info span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ad-info i {
+            color: #4f46e5;
+        }
+
+        .ad-date {
+            margin: 0.5rem 0;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+
+        .ad-date span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .ad-date i {
+            color: #4f46e5;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #4338ca;
+        }
+
+        .favorite-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+            padding: 0.5rem;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+        }
+
+        .favorite-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .no-favorites {
+            text-align: center;
+            padding: 3rem;
+            color: #6b7280;
+        }
+
+        .no-favorites i {
+            font-size: 3rem;
+            color: #e5e7eb;
+            margin-bottom: 1rem;
+        }
+
+        .no-favorites h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .no-favorites p {
+            color: #9ca3af;
+        }
+    

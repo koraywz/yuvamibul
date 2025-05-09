@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İlan Detayı - PawFinder</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/navbar.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/ad-detay.css">
+</head>
+<body>
+    <div class="container">
+        <a id="backButton" href="/views/shelters" class="back-button">
+            <i class="fas fa-arrow-left"></i> İlanlara Dön
+        </a>
+
+        <div id="adDetail" class="ad-detail-container">
+            <!-- İlan detayları buraya dinamik olarak eklenecek -->
+        </div>
+    </div>
+
+    <script src="../js/navbar.js"></script>
+    <script>
+        async function loadAdDetail() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const adId = urlParams.get('id');
+
+                if (!adId) {
+                    window.location.href = '/views/shelters';
+                    return;
+                }
+
+                const response = await fetch(`/api/ads/${adId}`);
+                const ad = await response.json();
+
+                const container = document.getElementById('adDetail');
+                container.innerHTML = `
+                    <div class="ad-header">
+                        <img src="${ad.resim_url}" alt="${ad.cins}" class="ad-image">
+                        <div class="ad-info">
+                            <h1 class="ad-title">${ad.cins}</h1>
+                            <div class="ad-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>${ad.bulundugu_yer}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-birthday-cake"></i>
+                                    <span>${ad.yas} yaşında</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-venus-mars"></i>
+                                    <span>${ad.cinsiyet}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-phone"></i>
+                                    <span>${ad.iletisim_no}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>Oluşturulma: ${formatDate(ad.createdAt)}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-edit"></i>
+                                    <span>Son Güncelleme: ${formatDate(ad.updatedAt)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="ad-section">
+                        <h2 class="section-title"><i class="fas fa-heartbeat"></i> Sağlık Durumu</h2>
+                        <p class="section-content">${ad.saglik_durumu}</p>
+                    </div>
+
+                    <div class="ad-section">
+                        <h2 class="section-title"><i class="fas fa-paw"></i> Karakter Özellikleri</h2>
+                        <p class="section-content">${ad.karakter_ozellikleri}</p>
+                    </div>
+
+                    <div class="ad-section">
+                        <h2 class="section-title"><i class="fas fa-book"></i> Hikaye</h2>
+                        <p class="section-content">${ad.hikaye}</p>
+                    </div>
+
+                    <div class="contact-buttons">
+                        <a href="tel:${ad.iletisim_no}" class="btn btn-primary">
+                            <i class="fas fa-phone"></i> Ara
+                        </a>
+                        <a href="mailto:info@pawfinder.com" class="btn btn-secondary">
+                            <i class="fas fa-envelope"></i> E-posta
+                        </a>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('İlan detayları yüklenirken hata oluştu:', error);
+                window.location.href = '/views/shelters';
+            }
+        }
+
+        function formatDate(dateString) {
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return new Date(dateString).toLocaleDateString('tr-TR', options);
+        }
+
+        function setBackButton() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const referer = urlParams.get('referer');
+            const backButton = document.getElementById('backButton');
+            if (!backButton) return;
+            if (referer === 'index') {
+                backButton.href = '/views/index.html';
+                backButton.innerHTML = '<i class="fas fa-arrow-left"></i> Anasayfaya Dön';
+            } else if (referer === 'shelters') {
+                backButton.href = '/views/shelters';
+                backButton.innerHTML = '<i class="fas fa-arrow-left"></i> İlanlara Dön';
+            } else if (referer === 'ads-dashboard') {
+                backButton.href = '/views/ads-dashboard';
+                backButton.innerHTML = '<i class="fas fa-arrow-left"></i> İlanlarım';
+            } else if (referer === 'favorites') {
+                backButton.href = '/views/favorites';
+                backButton.innerHTML = '<i class="fas fa-arrow-left"></i> Favorilerime Dön';
+            } else {
+                backButton.href = '/views/shelters';
+                backButton.innerHTML = '<i class="fas fa-arrow-left"></i> İlanlara Dön';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            setBackButton();
+            loadAdDetail();
+        });
+    </script>
+</body>
+</html>

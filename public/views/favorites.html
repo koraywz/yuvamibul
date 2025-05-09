@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Favori İlanlarım - PawFinder</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/navbar.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/favorites.css">
+</head>
+<body>
+    <div class="container">
+        <div class="favorites-container">
+            <div class="favorites-header">
+                <h1>Favori İlanlarım</h1>
+            </div>
+            
+            <div id="favoritesGrid" class="shelters-grid">
+                <!-- Favori ilanlar buraya dinamik olarak eklenecek -->
+            </div>
+        </div>
+    </div>
+
+    <div class="notification-container"></div>
+
+    <script src="../js/navbar.js"></script>
+    <script src="../js/notification.js"></script>
+    <script>
+        function formatDate(dateString) {
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric'
+            };
+            return new Date(dateString).toLocaleDateString('tr-TR', options);
+        }
+
+        // Favori ilanları yükle
+        async function loadFavorites() {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = '/views/login';
+                    return;
+                }
+
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                if (user.isAdmin !== 0 || user.role !== 'user') {
+                    notifications.error('Bu sayfaya erişim yetkiniz yok', 'Hata');
+                    window.location.href = '/views/shelters';
+                    return;
+                }
+
+                const response = await fetch('/api/favorites', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Favoriler yüklenirken bir hata oluştu');
+                }
+
+                const favorites = await response.json();
+                const container = document.getElementById('favoritesGrid');
+
+                if (!favorites || favorites.length === 0) {
+                    container.innerHTML = `
+                        <div class="no-favorites">
+                            <i class="fas fa-heart"></i>
+                            <h2>Henüz favori ilanınız yok</h2>
+                            <p>Beğendiğiniz ilanları favorilere ekleyerek burada görüntüleyebilirsiniz.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = favorites.map(ad => `
+                    <div class="shelter-card">
+                        <button class="favorite-btn" onclick="removeFavorite('${ad._id}', this)">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                        <img src="${ad.resim_url || '../images/default-pet.jpg'}" alt="${ad.cins}" class="ad-image">
+                        <div class="shelter-card-content">
+                            <h3>${ad.cins}</h3>
+                            <div class="ad-info">
+                                <span><i class="fas fa-map-marker-alt"></i> ${ad.bulundugu_yer}</span>
+                                <span><i class="fas fa-birthday-cake"></i> ${ad.yas} yaşında</span>
+                                <span><i class="fas fa-venus-mars"></i> ${ad.cinsiyet}</span>
+                                <span><i class="fa-solid fa-user"></i> ${ad.olusturanAd || 'Bilinmiyor'}</span>
+                            </div>
+                            <div class="ad-date">
+                                <span><i class="fas fa-calendar"></i> ${formatDate(ad.createdAt)}</span>
+                            </div>
+                            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                                <a href="/views/ad-detay?id=${ad.ilan_no}" class="btn btn-primary">Detayları Gör</a>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Favoriler yüklenirken hata:', error);
+                notifications.error(error.message || 'Favoriler yüklenirken bir hata oluştu', 'Hata');
+            }
+        }
+
+        // Favoriden kaldır
+        async function removeFavorite(adId, button) {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    window.location.href = '/views/login';
+                    return;
+                }
+
+                const response = await fetch(`/api/favorites/${adId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const card = button.closest('.shelter-card');
+                    card.remove();
+                    notifications.success('İlan favorilerden kaldırıldı', 'Başarılı');
+
+                    // Eğer son favori kaldırıldıysa, boş durum mesajını göster
+                    const container = document.getElementById('favoritesGrid');
+                    if (container.children.length === 0) {
+                        container.innerHTML = `
+                            <div class="no-favorites">
+                                <i class="fas fa-heart"></i>
+                                <h2>Henüz favori ilanınız yok</h2>
+                                <p>Beğendiğiniz ilanları favorilere ekleyerek burada görüntüleyebilirsiniz.</p>
+                            </div>
+                        `;
+                    }
+                } else {
+                    const data = await response.json();
+                    notifications.error(data.message || 'Bir hata oluştu', 'Hata');
+                }
+            } catch (error) {
+                console.error('Favori kaldırma hatası:', error);
+                notifications.error('Bir hata oluştu', 'Hata');
+            }
+        }
+
+        // Sayfa yüklendiğinde favorileri getir
+        document.addEventListener('DOMContentLoaded', loadFavorites);
+    </script>
+</body>
+</html>

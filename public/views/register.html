@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kayıt Ol - PawFinder</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/navbar.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div id="alreadyLoggedInMessage" style="display: none; text-align: center; margin: 20px;">
+            <h2>Zaten Giriş Yapmışsınız</h2>
+            <p>Giriş yapmış durumdasınız. Ana sayfaya dönmek için <a href="/">tıklayın</a>.</p>
+        </div>
+
+        <form id="registerForm" class="form">
+            <h2>Kayıt Ol</h2>
+            <div class="form-group">
+                <input type="text" id="firstName" name="firstName" required placeholder="Ad">
+            </div>
+            <div class="form-group">
+                <input type="text" id="lastName" name="lastName" required placeholder="Soyad">
+            </div>
+            <div class="form-group">
+                <input type="email" id="email" name="email" required placeholder="E-posta">
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" name="password" required minlength="6" placeholder="Şifre">
+            </div>
+            <div class="form-group">
+                <input type="date" id="birthDate" name="birthDate" required>
+            </div>
+            <button type="submit">Kayıt Ol</button>
+            <p>Zaten hesabınız var mı? <a href="/views/login">Giriş Yap</a></p>
+        </form>
+    </div>
+
+    <script src="../js/navbar.js"></script>
+    <script src="../js/notification.js"></script>
+    <script>
+        // Sayfa yüklendiğinde kullanıcı oturum durumunu kontrol et
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tarayıcıdaki localStorage'dan 'token' anahtarıyla kaydedilmiş değeri al
+            const token = localStorage.getItem('token');
+            if (token) {
+                // Eğer token varsa, kullanıcı zaten giriş yapmış demektir
+                // Kayıt formunu gizle
+                document.getElementById('registerForm').style.display = 'none';
+                // Kullanıcıya giriş yapmış olduğunu belirten mesajı göster
+                document.getElementById('alreadyLoggedInMessage').style.display = 'block';
+            }
+        });
+
+        // Kayıt formu gönderildiğinde çalışacak olay dinleyicisi
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            // Formun varsayılan gönderim davranışını engelle
+            e.preventDefault();
+            
+            // Formdaki alanlardan kullanıcı bilgilerini al ve bir nesneye ata
+            const formData = {
+                firstName: document.getElementById('firstName').value, // Kullanıcının adı
+                lastName: document.getElementById('lastName').value,   // Kullanıcının soyadı
+                email: document.getElementById('email').value,         // Kullanıcının e-posta adresi
+                password: document.getElementById('password').value,   // Kullanıcının şifresi
+                birthDate: document.getElementById('birthDate').value  // Kullanıcının doğum tarihi
+            };
+
+            try {
+                // '/api/register' adresine POST isteği gönder
+                const response = await fetch('/api/register', {
+                    method: 'POST', // HTTP POST metodu
+                    headers: {
+                        'Content-Type': 'application/json' // JSON formatında veri gönderileceğini belirt
+                    },
+                    body: JSON.stringify(formData) // Kullanıcı bilgilerini JSON formatına çevir ve isteğe ekle
+                });
+
+                // Sunucudan dönen yanıtı JSON formatında çöz
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Eğer yanıt başarılıysa, kullanıcıya başarı mesajı göster
+                    notifications.success('Kayıt işleminiz başarıyla tamamlandı! Giriş sayfasına yönlendiriliyorsunuz...', 'Kayıt Başarılı');
+                    // 2 saniye sonra kullanıcıyı giriş sayfasına yönlendir
+                    setTimeout(() => {
+                        window.location.href = '/views/login';
+                    }, 2000);
+                } else {
+                    // Eğer yanıt başarısızsa, hata mesajını göster
+                    notifications.error(data.message || 'Kayıt işlemi başarısız oldu. Lütfen bilgilerinizi kontrol edin.', 'Kayıt Başarısız');
+                }
+            } catch (error) {
+                // Eğer bir hata oluşursa, konsola yazdır ve kullanıcıya hata mesajı göster
+                console.error('Hata:', error);
+                notifications.error('Bir hata oluştu. Lütfen tekrar deneyin.', 'Sistem Hatası');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog - PawFinder</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/navbar.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/blog.css">    
+</head>
+
+<body>
+    <div class="container">
+        <div class="blog-container">
+            <div class="blog-header">
+                <h1>Blog Yazıları</h1>
+                <div id="adminControls" style="display: none;">
+                    <a href="/views/create-blog" class="create-blog-btn">
+                        <i class="fas fa-plus"></i> Yeni Blog Yazısı
+                    </a>
+                </div>
+            </div>
+            
+            <div id="blogGrid" class="blog-grid">
+                <!-- Blog yazıları buraya dinamik olarak eklenecek -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Blog Detay Modal -->
+    <div id="blogModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Blog Detayı</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div id="modalContent">
+                <!-- Blog detayları buraya dinamik olarak eklenecek -->
+            </div>
+        </div>
+    </div>
+
+    <div class="notification-container"></div>
+
+    <script src="../js/navbar.js"></script>
+    <script src="../js/notification.js"></script>
+    <script>
+        // Admin kontrolü
+        async function checkAdminStatus() {
+            const token = localStorage.getItem('token'); // Kullanıcı token'ını alır
+            if (token) {
+                try {
+                    const response = await fetch('/api/profile', {
+                        headers: {
+                            'Authorization': `Bearer ${token}` // Yetkilendirme başlığı ekler
+                        }
+                    });
+                    const userData = await response.json(); // Kullanıcı bilgilerini JSON formatında alır
+
+                    // Eğer kullanıcı admin ise kontrol panelini ve butonları göster
+                    if (userData.isAdmin === 1) {
+                        document.getElementById('adminControls').style.display = 'block'; // Admin kontrol panelini göster
+                        document.querySelectorAll('[id^="blogActions_"]').forEach(el => {
+                            el.style.display = 'flex'; // Admin işlemleri için butonları göster
+                        });
+                    } else {
+                        // Admin olmayan kullanıcılar için kontrol panelini ve butonları gizle
+                        document.getElementById('adminControls').style.display = 'none';
+                        document.querySelectorAll('[id^="blogActions_"]').forEach(el => {
+                            el.style.display = 'none';
+                        });
+                    }
+
+                    // Blogları yükle
+                    loadBlogs(userData);
+                } catch (error) {
+                    console.error('Admin kontrolü hatası:', error); // Hata durumunda konsola yazdır
+                    loadBlogs(null); // Kullanıcı bilgisi olmadan blogları yükle
+                }
+            } else {
+                loadBlogs(null); // Token yoksa blogları yükle
+            }
+        }
+
+        // Sayfa yüklendiğinde admin kontrolünü yap
+        document.addEventListener('DOMContentLoaded', checkAdminStatus);
+
+        // Modal işlemleri
+        const modal = document.getElementById('blogModal'); // Blog detay modalını seç
+        const closeModal = document.querySelector('.close-modal'); // Modal kapatma butonunu seç
+
+        // Modal kapatma işlemi
+        closeModal.onclick = function() {
+            modal.style.display = "none"; // Modalı gizle
+        }
+
+        // Modal dışında bir yere tıklanırsa modalı kapat
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none"; // Modalı gizle
+            }
+        }
+
+        // Blog yazılarını getir
+        async function loadBlogs(userData) {
+            try {
+                const response = await fetch('/api/blogs'); // Blogları API'den al
+                const blogs = await response.json(); // Blogları JSON formatında al
+
+                const blogGrid = document.getElementById('blogGrid'); // Blogların ekleneceği grid
+                blogGrid.innerHTML = ''; // Önceki içerikleri temizle
+
+                blogs.forEach(blog => {
+                    const blogCard = document.createElement('div'); // Yeni bir blog kartı oluştur
+                    blogCard.className = 'blog-card'; // Blog kartı için CSS sınıfı ekle
+                    
+                    // Düzenleme ve silme butonlarını sadece admin kullanıcılara göster
+                    const showActions = userData && userData.isAdmin === 1;
+
+                    // Blog kartının içeriğini oluştur
+                    blogCard.innerHTML = `
+                        <div class="blog-actions" style="display: ${showActions ? 'flex' : 'none'}">
+                            <button class="ad-action-btn" onclick="editBlog(${blog.blogNo})">
+                                <i class="fas fa-edit"></i> <!-- Düzenleme butonu -->
+                            </button>
+                            <button class="ad-action-btn" onclick="deleteBlog(${blog.blogNo})">
+                                <i class="fas fa-trash"></i> <!-- Silme butonu -->
+                            </button>
+                        </div>
+                        <img src="${blog.imageUrl}" alt="${blog.title}"> <!-- Blog resmi -->
+                        <div class="blog-card-content">
+                            <h3>${blog.title}</h3> <!-- Blog başlığı -->
+                            <div class="blog-meta">
+                                <div class="blog-meta-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>Oluşturulma: ${formatDate(blog.createdAt)}</span> <!-- Oluşturulma tarihi -->
+                                </div>
+                                <div class="blog-meta-item">
+                                    <i class="fas fa-edit"></i>
+                                    <span>Son Güncelleme: ${formatDate(blog.updatedAt)}</span> <!-- Güncelleme tarihi -->
+                                </div>
+                                <div class="blog-meta-item">
+                                    <span><i class="fa-solid fa-user"></i> ${blog.olusturanAd || blog.olusturan}</span> <!-- Blog yazarı -->
+                                </div>
+                            </div>
+                            <p>${blog.description}</p> <!-- Blog açıklaması -->
+                            <a href="/views/blog-detail.html?id=${blog.blogNo}" class="read-more-btn">Devamını Oku</a> <!-- Detay sayfasına yönlendirme -->
+                        </div>
+                    `;
+                    blogGrid.appendChild(blogCard); // Blog kartını gride ekle
+                });
+            } catch (error) {
+                console.error('Blog yazıları yüklenirken hata:', error); // Hata durumunda konsola yazdır
+            }
+        }
+
+        // Blog detayını göster
+        async function showBlogDetail(blogNo) {
+            try {
+                const response = await fetch(`/api/blogs/${blogNo}`); // Blog detayını API'den al
+                const blog = await response.json(); // Blog detayını JSON formatında al
+
+                if (!response.ok) {
+                    notifications.error('Blog detayları yüklenirken bir hata oluştu.', 'Yükleme Hatası'); // Hata mesajı göster
+                    return;
+                }
+
+                const modalContent = document.getElementById('modalContent'); // Modal içeriğini seç
+                modalContent.innerHTML = `
+                    <div class="modal-header">
+                        <h2 class="modal-title">${blog.title}</h2> <!-- Blog başlığı -->
+                        <button class="close-modal">&times;</button> <!-- Modal kapatma butonu -->
+                    </div>
+                    <img src="${blog.imageUrl}" alt="${blog.title}" class="modal-image"> <!-- Blog resmi -->
+                    <div class="modal-info">
+                        <div class="info-item">
+                            <i class="fas fa-calendar"></i>
+                            <span>Oluşturulma: ${formatDate(blog.createdAt)}</span> <!-- Oluşturulma tarihi -->
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-edit"></i>
+                            <span>Son Güncelleme: ${formatDate(blog.updatedAt)}</span> <!-- Güncelleme tarihi -->
+                        </div>
+                        <div class="blog-meta-item">
+                           <span><i class="fa-solid fa-user"></i> ${blog.olusturanAd}</span> <!-- Blog yazarı -->
+                        </div>
+                    </div>
+                    <div class="modal-description">
+                        ${blog.description} <!-- Blog açıklaması -->
+                    </div>
+                    <div class="modal-content-text">
+                        ${blog.content} <!-- Blog içeriği -->
+                    </div>
+                `;
+
+                modal.style.display = "block"; // Modalı göster
+            } catch (error) {
+                console.error('Blog detayı yüklenirken hata:', error); // Hata durumunda konsola yazdır
+                notifications.error('Blog detayları yüklenirken bir hata oluştu.', 'Sistem Hatası'); // Hata mesajı göster
+            }
+        }
+
+        // Tarihi formatla
+        function formatDate(dateString) {
+            const options = { 
+                year: 'numeric', // Yıl bilgisi
+                month: 'long',   // Ay bilgisi (tam isim)
+                day: 'numeric',  // Gün bilgisi
+                hour: '2-digit', // Saat bilgisi
+                minute: '2-digit' // Dakika bilgisi
+            };
+            return new Date(dateString).toLocaleDateString('tr-TR', options); // Türkçe formatta döndür
+        }
+
+        // Blog silme işlemi
+        async function deleteBlog(blogNo) {
+            if (!confirm('Bu blog yazısını silmek istediğinizden emin misiniz?')) {
+                return; // Kullanıcı onay vermezse işlemi iptal et
+            }
+
+            try {
+                const response = await fetch(`/api/blogs/${blogNo}`, {
+                    method: 'DELETE', // Silme işlemi için DELETE metodu kullan
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}` // Yetkilendirme başlığı ekle
+                    }
+                });
+
+                if (response.ok) {
+                    notifications.success('Blog başarıyla silindi!', 'İşlem Başarılı'); // Başarı mesajı göster
+                    setTimeout(() => {
+                        window.location.reload(); // Sayfayı yeniden yükle
+                    }, 1500);
+                } else {
+                    const error = await response.json();
+                    notifications.error(error.message || 'Blog silinirken bir hata oluştu!', 'İşlem Başarısız'); // Hata mesajı göster
+                }
+
+            } catch (error) {
+                console.error('Blog silme hatası:', error); // Hata durumunda konsola yazdır
+                notifications.error('Blog silinirken bir hata oluştu!', 'Sistem Hatası'); // Hata mesajı göster
+            }
+        }
+
+        // Blog düzenleme sayfasına yönlendirme
+        function editBlog(blogNo) {
+            window.location.href = `/views/edit-blog.html?blogNo=${blogNo}`; // Düzenleme sayfasına yönlendir
+        }
+    </script>
+</body>
+</html>

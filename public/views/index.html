@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YuvamıBul</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/navbar.css">
+    <link rel="stylesheet" href="../css/animations.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+</head>
+<body>
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Sevgi Dolu Bir Yuva İçin İlk Adımı Atın</h1>
+            <p>Barınaklardaki dostlarımızı sahiplenerek onların hayatını güzelleştirin.</p>
+            
+        </div>
+    </section>
+
+    <section class="latest-ads">
+        <div class="container">
+            <h2>Son Eklenen İlanlar</h2>
+            <div id="latestAdsContainer" class="shelters-grid">
+                <!-- Latest ads will be loaded here -->
+            </div>
+            <div class="view-more">
+                <a href="/views/shelters" class="btn btn-primary">Daha Fazla İlan Gör</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="blog-preview">
+        <div class="container">
+            <h2>Son Blog Yazıları</h2>
+            <div id="latestBlogsContainer" class="blog-grid">
+                <!-- Latest blogs will be loaded here -->
+            </div>
+            <div class="view-more">
+                <a href="/views/blog" class="btn btn-primary">Tüm Blog Yazılarını Gör</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-us">
+        <div class="container">
+            <h2 class="animated-title">Biz Kimiz?</h2>
+            <p class="animated-text">
+                PawFinder, barınaklardaki sahipsiz hayvanların sıcak bir yuva bulmasına yardımcı olmak için kurulmuş bir platformdur. 
+                Hayvan severleri ve barınakları bir araya getirerek, hayvanların hayatlarını güzelleştirmeyi amaçlıyoruz.
+            </p>
+        </div>
+    </section>
+
+    <section class="our-mission">
+        <div class="container">
+            <h2 class="animated-title">Amacımız</h2>
+            <div class="mission-grid">
+                <div class="mission-card">
+                    <i class="fas fa-paw"></i>
+                    <h3>Hayvan Sahiplenmeyi Teşvik Etmek</h3>
+                    <p>Barınaklardaki hayvanların daha fazla görünür olmasını sağlayarak, onların sıcak bir yuva bulmalarına yardımcı oluyoruz.</p>
+                </div>
+                <div class="mission-card">
+                    <i class="fas fa-hand-holding-heart"></i>
+                    <h3>Bağış Toplamak</h3>
+                    <p>Barınakların ihtiyaçlarını karşılamalarına destek olmak için bağış kampanyaları düzenliyoruz.</p>
+                </div>
+                <div class="mission-card">
+                    <i class="fas fa-users"></i>
+                    <h3>Topluluk Oluşturmak</h3>
+                    <p>Hayvan severleri bir araya getirerek, hayvanların yaşam koşullarını iyileştirmek için bir topluluk oluşturuyoruz.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="../js/navbar.js"></script>
+    <script>
+        // Son eklenen ilanları yüklemek için bir fonksiyon
+        async function loadLatestAds() {
+            try {
+                console.log('Fetching latest ads...'); // Konsola bilgi mesajı yazdır
+                const response = await fetch('/api/ads'); // '/api/ads' endpoint'ine GET isteği gönder
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`); // Eğer yanıt başarısızsa hata fırlat
+                }
+                const ads = await response.json(); // Gelen yanıtı JSON formatına dönüştür
+                console.log('Received ads:', ads); // Gelen ilanları konsola yazdır
+                
+                const container = document.getElementById('latestAdsContainer'); // İlanların yükleneceği HTML elemanını seç
+                if (!container) {
+                    console.error('Container element not found!'); // Eğer eleman bulunamazsa hata mesajı yazdır
+                    return;
+                }
+                container.innerHTML = ''; // Container içeriğini temizle
+                
+                if (!ads || ads.length === 0) {
+                    container.innerHTML = '<p>Henüz ilan bulunmamaktadır.</p>'; // Eğer ilan yoksa bilgilendirme mesajı göster
+                    return;
+                }
+                
+                // İlanları oluşturulma tarihine göre sırala (en yeni ilanlar önce)
+                const sortedAds = ads.sort((a, b) => new Date(b.olusturma_tarihi) - new Date(a.olusturma_tarihi));
+                console.log('Sorted ads:', sortedAds); // Sıralanmış ilanları konsola yazdır
+                
+                // Sadece ilk 3 ilanı al (en yeni 3 ilan)
+                const latestThreeAds = sortedAds.slice(0, 3);
+                console.log('Latest three ads:', latestThreeAds); // İlk 3 ilanı konsola yazdır
+                
+                latestThreeAds.forEach(ad => {
+                    const card = document.createElement('div'); // Yeni bir div elemanı oluştur
+                    card.className = 'shelter-card'; // Div'e 'shelter-card' sınıfını ekle
+                    
+                    // İlan bilgilerini kontrol et ve eksikse varsayılan değerler ata
+                    const imageUrl = ad.resim_url || 'default-image.jpg'; // Resim URL'si yoksa varsayılan resim kullan
+                    const breed = ad.cins || 'Bilinmiyor'; // Cins bilgisi yoksa 'Bilinmiyor' yaz
+                    const location = ad.bulundugu_yer || 'Konum belirtilmemiş'; // Konum bilgisi yoksa bilgilendirme yazısı yaz
+                    const age = ad.yas || 'Yaş belirtilmemiş'; // Yaş bilgisi yoksa bilgilendirme yazısı yaz
+                    const gender = ad.cinsiyet || 'Cinsiyet belirtilmemiş'; // Cinsiyet bilgisi yoksa bilgilendirme yazısı yaz
+                    const adDate = ad.olusturma_tarihi ? new Date(ad.olusturma_tarihi).toLocaleDateString('tr-TR') : 'Tarih belirtilmemiş'; // Tarih bilgisi yoksa bilgilendirme yazısı yaz
+                    
+                    // İlan kartının HTML içeriğini oluştur
+                    card.innerHTML = `
+                        <img src="${imageUrl}" alt="${breed}" class="ad-image">
+                        <div class="shelter-card-content">
+                            <h3>${breed}</h3>
+                            <div class="ad-info">
+                                <span><i class="fas fa-map-marker-alt"></i> ${location}</span>
+                                <span><i class="fas fa-birthday-cake"></i> ${age} yaşında</span>
+                                <span><i class="fas fa-venus-mars"></i> ${gender}</span>
+                            </div>
+                            <div class="ad-date">
+                                <span><i class="fas fa-calendar"></i> ${adDate}</span>
+                            </div>
+                            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                                <a href="/views/ad-detay?id=${ad.ilan_no}&referer=index" class="btn btn-primary">Detayları Gör</a>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card); // Kartı container'a ekle
+                });
+            } catch (error) {
+                console.error('Son ilanlar yüklenirken hata oluştu:', error); // Hata durumunda konsola hata mesajı yazdır
+                const container = document.getElementById('latestAdsContainer'); // Container elemanını seç
+                if (container) {
+                    container.innerHTML = '<p>İlanlar yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.</p>'; // Hata mesajını göster
+                }
+            }
+        }
+
+        // Son eklenen blog yazılarını yüklemek için bir fonksiyon
+        async function loadLatestBlogs() {
+            try {
+                const response = await fetch('/api/blogs'); // '/api/blogs' endpoint'ine GET isteği gönder
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`); // Eğer yanıt başarısızsa hata fırlat
+                const blogs = await response.json(); // Gelen yanıtı JSON formatına dönüştür
+
+                const container = document.getElementById('latestBlogsContainer'); // Blogların yükleneceği HTML elemanını seç
+                container.innerHTML = ''; // Container içeriğini temizle
+
+                if (!blogs || blogs.length === 0) {
+                    container.innerHTML = '<p>Henüz blog yazısı bulunmamaktadır.</p>'; // Eğer blog yazısı yoksa bilgilendirme mesajı göster
+                    return;
+                }
+
+                // Blogları oluşturulma tarihine göre sırala (en yeni bloglar önce)
+                const sortedBlogs = blogs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                const latestThreeBlogs = sortedBlogs.slice(0, 3); // Sadece ilk 3 blog yazısını al
+
+                latestThreeBlogs.forEach(blog => {
+                    const card = document.createElement('div'); // Yeni bir div elemanı oluştur
+                    card.className = 'blog-card'; // Div'e 'blog-card' sınıfını ekle
+                    const imageUrl = blog.imageUrl || 'default-blog.jpg'; // Resim URL'si yoksa varsayılan resim kullan
+                    const title = blog.title || 'Başlık Yok'; // Başlık yoksa 'Başlık Yok' yaz
+                    const description = blog.description || 'Açıklama Yok'; // Açıklama yoksa 'Açıklama Yok' yaz
+
+                    // Blog kartının HTML içeriğini oluştur
+                    card.innerHTML = `
+                        <img src="${imageUrl}" alt="${title}" class="blog-image">
+                        <div class="blog-card-content">
+                            <h3>${title}</h3>
+                            <p>${description}</p>
+                            <a href="/views/blog-detail?id=${blog.blogNo}&referer=index" class="btn btn-primary">Devamını Oku</a>
+                        </div>
+                    `;
+                    container.appendChild(card); // Kartı container'a ekle
+                });
+            } catch (error) {
+                console.error('Son blog yazıları yüklenirken hata oluştu:', error); // Hata durumunda konsola hata mesajı yazdır
+            }
+        }
+
+        // Sayfa yüklendiğinde ve DOM hazır olduğunda ilanları ve blogları yükle
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLatestAds(); // Son ilanları yükle
+            loadLatestBlogs(); // Son blog yazılarını yükle
+        });
+    </script>
+</body>
+</html>

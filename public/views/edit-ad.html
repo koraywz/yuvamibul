@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İlan Düzenle - PawFinder</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/navbar.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/edit-ad.css">
+</head>
+<body>
+    <div class="container">
+        <div class="edit-ad-container">
+            <h1>İlan Düzenle</h1>
+            <form id="editAdForm">
+                <div class="form-group">
+                    <label for="cins">Hayvan Cinsi</label>
+                    <input type="text" id="cins" name="cins" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="yas">Yaş</label>
+                    <input type="number" id="yas" name="yas" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="cinsiyet">Cinsiyet</label>
+                    <select id="cinsiyet" name="cinsiyet" class="form-control" required>
+                        <option value="Erkek">Erkek</option>
+                        <option value="Dişi">Dişi</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="saglik_durumu">Sağlık Durumu</label>
+                    <textarea id="saglik_durumu" name="saglik_durumu" class="form-control" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="karakter_ozellikleri">Karakter Özellikleri</label>
+                    <textarea id="karakter_ozellikleri" name="karakter_ozellikleri" class="form-control" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="bulundugu_yer">Bulunduğu Yer</label>
+                    <input type="text" id="bulundugu_yer" name="bulundugu_yer" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="iletisim_no">İletişim Numarası</label>
+                    <input type="tel" id="iletisim_no" name="iletisim_no" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="hikaye">Hikaye</label>
+                    <textarea id="hikaye" name="hikaye" class="form-control" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="resim_url">Resim URL</label>
+                    <input type="url" id="resim_url" name="resim_url" class="form-control" required>
+                </div>
+
+                <button type="submit" class="btn-primary">İlanı Güncelle</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="notification-container"></div>
+
+    <script src="../js/navbar.js"></script>
+    <script src="../js/notification.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Kullanıcının token'ını localStorage'dan alıyoruz.
+            const token = localStorage.getItem('token');
+            if (!token) {
+                // Eğer token yoksa, kullanıcıya hata bildirimi gösteriyoruz ve giriş sayfasına yönlendiriyoruz.
+                notifications.error('Bu sayfaya erişim için giriş yapmanız gerekmektedir.', 'Yetkisiz Erişim');
+                setTimeout(() => {
+                    window.location.href = 'views/login.html';
+                }, 1500);
+                return;
+            }
+
+            try {
+                // Kullanıcı bilgilerini almak için API'ye istek gönderiyoruz.
+                const profileResponse = await fetch('/api/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}` // Token'ı yetkilendirme başlığına ekliyoruz.
+                    }
+                });
+                const userData = await profileResponse.json();
+
+                // URL'den ilan numarasını alıyoruz.
+                const urlParams = new URLSearchParams(window.location.search);
+                const ilanNo = urlParams.get('ilanNo');
+
+                if (!ilanNo) {
+                    // Eğer ilan numarası yoksa, kullanıcıyı barınaklar sayfasına yönlendiriyoruz.
+                    window.location.href = 'views/shelters.html';
+                    return;
+                }
+
+                // İlan bilgilerini almak için API'ye istek gönderiyoruz.
+                const adResponse = await fetch(`/api/ads/${ilanNo}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (adResponse.ok) {
+                    const ad = await adResponse.json();
+
+                    // Eğer kullanıcı bu ilanın sahibi değilse ve admin değilse erişimi engelliyoruz.
+                    if (ad.olusturan !== userData.email && userData.isAdmin !== 1) {
+                        notifications.error('Bu ilanı düzenleme yetkiniz bulunmuyor.', 'Yetkisiz Erişim');
+                        setTimeout(() => {
+                            window.location.href = 'views/shelters.html';
+                        }, 1500);
+                        return;
+                    }
+
+                    // İlan bilgilerini forma dolduruyoruz.
+                    document.getElementById('cins').value = ad.cins;
+                    document.getElementById('yas').value = ad.yas;
+                    document.getElementById('cinsiyet').value = ad.cinsiyet;
+                    document.getElementById('saglik_durumu').value = ad.saglik_durumu;
+                    document.getElementById('karakter_ozellikleri').value = ad.karakter_ozellikleri;
+                    document.getElementById('bulundugu_yer').value = ad.bulundugu_yer;
+                    document.getElementById('iletisim_no').value = ad.iletisim_no;
+                    document.getElementById('hikaye').value = ad.hikaye;
+                    document.getElementById('resim_url').value = ad.resim_url;
+                } else {
+                    // Eğer ilan bilgileri alınamazsa, kullanıcıyı barınaklar sayfasına yönlendiriyoruz.
+                    window.location.href = 'views/shelters.html';
+                }
+            } catch (error) {
+                // API isteği sırasında bir hata oluşursa, kullanıcıyı barınaklar sayfasına yönlendiriyoruz.
+                console.error('Hata:', error);
+                window.location.href = 'views/shelters.html';
+            }
+        });
+
+        // Form gönderildiğinde çalışacak olay dinleyicisi.
+        document.getElementById('editAdForm').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Formun varsayılan gönderim davranışını engelliyoruz.
+
+            // Kullanıcının token'ını kontrol ediyoruz.
+            const token = localStorage.getItem('token');
+            const urlParams = new URLSearchParams(window.location.search);
+            const ilanNo = urlParams.get('ilanNo');
+
+            // Form verilerini topluyoruz.
+            const formData = {
+                cins: document.getElementById('cins').value, // Hayvan cinsi
+                yas: parseInt(document.getElementById('yas').value), // Yaş
+                cinsiyet: document.getElementById('cinsiyet').value, // Cinsiyet
+                saglik_durumu: document.getElementById('saglik_durumu').value, // Sağlık durumu
+                karakter_ozellikleri: document.getElementById('karakter_ozellikleri').value, // Karakter özellikleri
+                bulundugu_yer: document.getElementById('bulundugu_yer').value, // Bulunduğu yer
+                iletisim_no: document.getElementById('iletisim_no').value, // İletişim numarası
+                hikaye: document.getElementById('hikaye').value, // Hikaye
+                resim_url: document.getElementById('resim_url').value // Resim URL
+            };
+
+            try {
+                // İlanı güncellemek için API'ye PUT isteği gönderiyoruz.
+                const response = await fetch(`/api/ads/${ilanNo}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json', // JSON formatında veri gönderiyoruz.
+                        'Authorization': `Bearer ${token}` // Token'ı yetkilendirme başlığına ekliyoruz.
+                    },
+                    body: JSON.stringify(formData) // Form verilerini JSON formatına çeviriyoruz.
+                });
+
+                if (response.ok) {
+                    // Eğer istek başarılıysa, başarı bildirimi gösteriyoruz ve ilanlar sayfasına yönlendiriyoruz.
+                    notifications.success('İlan başarıyla güncellendi!', 'İşlem Başarılı');
+                    setTimeout(() => {
+                        window.location.href = '/views/ads-dashboard';
+                    }, 1500);
+                } else {
+                    // Eğer istek başarısızsa, hata mesajını alıp kullanıcıya gösteriyoruz.
+                    const error = await response.json();
+                    notifications.error(error.message || 'İlan güncellenirken bir hata oluştu!', 'İşlem Başarısız');
+                }
+            } catch (error) {
+                // İstek sırasında bir hata oluşursa, kullanıcıya genel bir hata mesajı gösteriyoruz.
+                console.error('İlan güncelleme hatası:', error);
+                notifications.error('İlan güncellenirken bir hata oluştu!', 'Sistem Hatası');
+            }
+        });
+    </script>
+</body>
+</html>

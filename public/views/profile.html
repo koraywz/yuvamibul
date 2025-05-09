@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil - PawFinder</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/navbar.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/profile2.css">
+</head>
+
+<body>
+    <div class="profile-container">
+        <div class="profile-header">
+            <div class="profile-avatar">
+                <span id="userInitials"></span>
+            </div>
+            <h1 class="profile-name">
+                <span id="firstName"></span> <span id="lastName"></span>
+            </h1>
+            <div class="profile-role" id="roleContainer">
+                <i class="fas fa-user-tag"></i>
+                <span id="role"></span>
+            </div>
+        </div>
+
+        <div class="profile-info">
+            <div class="info-group">
+                <div class="info-label">
+                    <i class="fas fa-user"></i>
+                    Ad
+                </div>
+                <div class="info-value" id="firstNameInfo"></div>
+            </div>
+            <div class="info-group">
+                <div class="info-label">
+                    <i class="fas fa-user"></i>
+                    Soyad
+                </div>
+                <div class="info-value" id="lastNameInfo"></div>
+            </div>
+            <div class="info-group">
+                <div class="info-label">
+                    <i class="fas fa-envelope"></i>
+                    E-posta
+                </div>
+                <div class="info-value" id="email"></div>
+            </div>
+        </div>
+
+        <div class="form-container">
+            <div class="password-form">
+                <h2 class="form-title">
+                    <i class="fas fa-lock"></i>
+                    Şifre Değiştir
+                </h2>
+                <form id="passwordChangeForm">
+                    <div class="form-group">
+                        <label for="currentPassword">Mevcut Şifre</label>
+                        <input type="password" id="currentPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">Yeni Şifre</label>
+                        <input type="password" id="newPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmPassword">Yeni Şifre (Tekrar)</label>
+                        <input type="password" id="confirmPassword" required>
+                    </div>
+                    <button type="submit" class="submit-btn">
+                        <i class="fas fa-key"></i>
+                        Şifreyi Güncelle
+                    </button>
+                </form>
+            </div>
+
+            <div class="email-form">
+                <h2 class="form-title">
+                    <i class="fas fa-envelope"></i>
+                    E-posta Değiştir
+                </h2>
+                <form id="emailChangeForm">
+                    <div class="form-group">
+                        <label for="currentEmail">Mevcut E-posta</label>
+                        <input type="email" id="currentEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newEmail">Yeni E-posta</label>
+                        <input type="email" id="newEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmEmail">Yeni E-posta (Tekrar)</label>
+                        <input type="email" id="confirmEmail" required>
+                    </div>
+                    <button type="submit" class="submit-btn">
+                        <i class="fas fa-envelope"></i>
+                        E-postayı Güncelle
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <button id="logoutButton" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i>
+            Çıkış Yap
+        </button>
+    </div>
+    </div>
+
+    <div class="notification-container"></div>
+
+    <script src="../js/navbar.js"></script>
+    <script src="../js/notification.js"></script>
+    <script>
+        // Sayfa yüklendiğinde profil bilgilerini getir
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Kullanıcının token'ını localStorage'dan al
+            const token = localStorage.getItem('token');
+
+            // Eğer token yoksa, kullanıcı giriş yapmamış demektir
+            if (!token) {
+                // Kullanıcıya uyarı bildirimi göster
+                notifications.warning('Bu sayfaya erişim için giriş yapmanız gerekmektedir.', 'Yetkisiz Erişim');
+                // 1.5 saniye sonra giriş sayfasına yönlendir
+                setTimeout(() => {
+                    window.location.href = 'views/login.html';
+                }, 1500);
+                return; // İşlemi sonlandır
+            }
+
+            try {
+                // Kullanıcı profil bilgilerini almak için API'ye istek gönder
+                const response = await fetch('/api/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}` // Token'ı yetkilendirme başlığına ekle
+                    }
+                });
+
+                // Eğer istek başarılıysa
+                if (response.ok) {
+                    // API'den dönen kullanıcı verilerini JSON formatında al
+                    const userData = await response.json();
+
+                    // Kullanıcının ad ve soyadının baş harflerini al ve büyük harfe çevir
+                    const initials = `${userData.firstName.charAt(0)}${userData.lastName.charAt(0)}`.toUpperCase();
+                    // Baş harfleri avatar alanına yerleştir
+                    document.getElementById('userInitials').textContent = initials;
+
+                    // Kullanıcı adını ve soyadını ilgili alanlara yerleştir
+                    document.getElementById('firstName').textContent = userData.firstName;
+                    document.getElementById('lastName').textContent = userData.lastName;
+                    document.getElementById('firstNameInfo').textContent = userData.firstName;
+                    document.getElementById('lastNameInfo').textContent = userData.lastName;
+
+                    // Kullanıcı e-posta adresini ilgili alana yerleştir
+                    document.getElementById('email').textContent = userData.email;
+
+                    // Kullanıcı rolünü belirle ve ilgili alanlara yerleştir
+                    const roleElement = document.getElementById('role');
+                    const roleContainer = document.getElementById('roleContainer');
+
+                    if (userData.role === 'shelter') {
+                        // Eğer kullanıcı barınak sahibi ise
+                        roleElement.textContent = 'Barınak Sahibi';
+                        roleContainer.className = 'profile-role role-shelter'; // Barınak rolü için özel stil
+                    } else if (userData.role === 'user') {
+                        // Eğer kullanıcı normal kullanıcı ise
+                        roleElement.textContent = 'Kullanıcı';
+                        roleContainer.className = 'profile-role role-user'; // Kullanıcı rolü için özel stil
+                    } else {
+                        // Eğer kullanıcı admin ise
+                        roleElement.textContent = 'Admin';
+                        roleContainer.className = 'profile-role'; // Admin için varsayılan stil
+                    }
+                } else {
+                    // Eğer istek başarısızsa hata bildirimi göster
+                    notifications.error('Profil bilgileri yüklenirken bir hata oluştu!', 'Yükleme Hatası');
+                    // 1.5 saniye sonra ana sayfaya yönlendir
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                }
+            } catch (error) {
+                // Eğer bir sistem hatası oluşursa
+                console.error('Profil bilgileri yükleme hatası:', error); // Hata detaylarını konsola yaz
+                notifications.error('Profil bilgileri yüklenirken bir hata oluştu!', 'Sistem Hatası');
+                // 1.5 saniye sonra ana sayfaya yönlendir
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1500);
+            }
+        });
+
+        // Şifre değiştirme formu gönderildiğinde çalışacak olay dinleyici
+        document.getElementById('passwordChangeForm').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Formun varsayılan gönderim davranışını engelle
+
+            // Form alanlarından mevcut şifre, yeni şifre ve şifre doğrulama değerlerini al
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Eğer yeni şifreler eşleşmiyorsa hata bildirimi göster
+            if (newPassword !== confirmPassword) {
+                notifications.error('Yeni şifreler eşleşmiyor!', 'Doğrulama Hatası');
+                return; // İşlemi sonlandır
+            }
+
+            try {
+                // Şifre değiştirme isteği için API'ye POST isteği gönder
+                const response = await fetch('/api/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json', // JSON formatında veri gönderileceğini belirt
+                        'Authorization': `Bearer ${localStorage.getItem('token')}` // Token'ı ekle
+                    },
+                    body: JSON.stringify({
+                        currentPassword, // Mevcut şifre
+                        newPassword // Yeni şifre
+                    })
+                });
+
+                if (response.ok) {
+                    // Eğer işlem başarılıysa başarı bildirimi göster
+                    notifications.success('Şifreniz başarıyla değiştirildi!', 'İşlem Başarılı');
+                    document.getElementById('passwordChangeForm').reset(); // Formu sıfırla
+                } else {
+                    // Eğer işlem başarısızsa hata mesajını göster
+                    const error = await response.json();
+                    notifications.error(error.message || 'Şifre değiştirme işlemi başarısız!', 'İşlem Başarısız');
+                }
+            } catch (error) {
+                // Eğer bir sistem hatası oluşursa
+                console.error('Şifre değiştirme hatası:', error); // Hata detaylarını konsola yaz
+                notifications.error('Şifre değiştirme işlemi sırasında bir hata oluştu!', 'Sistem Hatası');
+            }
+        });
+
+        // E-posta değiştirme formu gönderildiğinde çalışacak olay dinleyici
+        document.getElementById('emailChangeForm').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Formun varsayılan gönderim davranışını engelle
+
+            // Form alanlarından mevcut e-posta, yeni e-posta ve e-posta doğrulama değerlerini al
+            const currentEmail = document.getElementById('currentEmail').value;
+            const newEmail = document.getElementById('newEmail').value;
+            const confirmEmail = document.getElementById('confirmEmail').value;
+
+            // Eğer yeni e-postalar eşleşmiyorsa hata bildirimi göster
+            if (newEmail !== confirmEmail) {
+                notifications.error('Yeni e-postalar eşleşmiyor!', 'Doğrulama Hatası');
+                return; // İşlemi sonlandır
+            }
+
+            try {
+                // E-posta değiştirme isteği için API'ye POST isteği gönder
+                const response = await fetch('/api/change-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json', // JSON formatında veri gönderileceğini belirt
+                        'Authorization': `Bearer ${localStorage.getItem('token')}` // Token'ı ekle
+                    },
+                    body: JSON.stringify({
+                        currentEmail, // Mevcut e-posta
+                        newEmail // Yeni e-posta
+                    })
+                });
+
+                if (response.ok) {
+                    // Eğer işlem başarılıysa başarı bildirimi göster
+                    notifications.success('E-postanız başarıyla değiştirildi!', 'İşlem Başarılı');
+                    document.getElementById('emailChangeForm').reset(); // Formu sıfırla
+                } else {
+                    // Eğer işlem başarısızsa hata mesajını göster
+                    const error = await response.json();
+                    notifications.error(error.message || 'E-posta değiştirme işlemi başarısız!', 'İşlem Başarısız');
+                }
+            } catch (error) {
+                // Eğer bir sistem hatası oluşursa
+                console.error('E-posta değiştirme hatası:', error); // Hata detaylarını konsola yaz
+                notifications.error('E-posta değiştirme işlemi sırasında bir hata oluştu!', 'Sistem Hatası');
+            }
+        });
+
+        // Çıkış yapma butonuna tıklandığında çalışacak olay dinleyici
+        document.getElementById('logoutButton').addEventListener('click', () => {
+            // Kullanıcının token ve kullanıcı bilgilerini localStorage'dan sil
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            // Çıkış yapıldığını bildiren bilgi mesajı göster
+            notifications.info('Başarıyla çıkış yapıldı.', 'Çıkış');
+            // 1.5 saniye sonra ana sayfaya yönlendir
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1500);
+        });
+    </script>
+</body>
+
+</html>

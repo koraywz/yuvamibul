@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kullanıcı Yetkilendirme - PawFinder</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/navbar.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/role-management.css">
+</head>
+<body>
+    <div class="users-container">
+        <h1>Kullanıcı Yetkilendirme</h1>
+        <div class="search-container">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="search-input" 
+                    placeholder="İsim veya e-posta ile ara..."
+                >
+            </div>
+        </div>
+        <table class="users-table">
+            <thead>
+                <tr>
+                    <th>Ad Soyad</th>
+                    <th>E-posta</th>
+                    <th>Mevcut Rol</th>
+                    <th>İşlem</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+                <!-- Kullanıcılar buraya dinamik olarak eklenecek -->
+            </tbody>
+        </table>
+    </div>
+
+    <div class="notification-container"></div>
+
+    <script src="../js/navbar.js"></script>
+    <script src="../js/notification.js"></script>
+    <script>
+        let allUsers = []; // Tüm kullanıcıları saklamak için bir dizi.
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Sayfa yüklendiğinde çalışır. Kullanıcının giriş yapıp yapmadığını kontrol eder.
+            const token = localStorage.getItem('token');
+            if (!token) {
+                // Eğer giriş yapılmamışsa, hata mesajı gösterir ve giriş sayfasına yönlendirir.
+                notifications.error('Bu sayfaya erişim için giriş yapmanız gerekmektedir.', 'Yetkisiz Erişim');
+                setTimeout(() => {
+                    window.location.href = 'views/login.html';
+                }, 1500);
+                return;
+            }
+
+            try {
+                // Kullanıcının admin yetkisi olup olmadığını kontrol eder.
+                const response = await fetch('/api/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                const userData = await response.json();
+
+                if (userData.isAdmin !== 1) {
+                    // Eğer kullanıcı admin değilse, hata mesajı gösterir ve ana sayfaya yönlendirir.
+                    notifications.error('Bu sayfaya erişim için admin yetkiniz olması gerekiyor.', 'Yetkisiz Erişim');
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                    return;
+                }
+
+                // Tüm kullanıcıları yükler ve tabloya ekler.
+                await loadUsers();
+
+                // Arama kutusuna yazılanları dinler ve kullanıcıları filtreler.
+                const searchInput = document.getElementById('searchInput');
+                searchInput.addEventListener('input', () => {
+                    const searchTerm = searchInput.value.toLowerCase().trim();
+                    filterUsers(searchTerm);
+                });
+            } catch (error) {
+                console.error('Yetki kontrolü hatası:', error);
+                window.location.href = '/';
+            }
+        });
+
+        async function loadUsers() {
+            // Sunucudan tüm kullanıcıları çeker ve tabloya ekler.
+            try {
+                const response = await fetch('/api/users', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                allUsers = await response.json(); // Kullanıcıları saklar.
+                displayUsers(allUsers); // Kullanıcıları tabloya ekler.
+            } catch (error) {
+                console.error('Kullanıcılar yüklenirken hata:', error);
+                notifications.error('Kullanıcılar yüklenirken bir hata oluştu!', 'Yükleme Hatası');
+            }
+        }
+
+        function filterUsers(searchTerm) {
+            // Kullanıcıları arama terimine göre filtreler.
+            if (!searchTerm) {
+                displayUsers(allUsers); // Arama terimi yoksa tüm kullanıcıları gösterir.
+                return;
+            }
+
+            const filteredUsers = allUsers.filter(user => {
+                // Kullanıcı adı veya e-posta arama terimini içeriyorsa filtreler.
+                const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+                const email = user.email.toLowerCase();
+                return fullName.includes(searchTerm) || email.includes(searchTerm);
+            });
+
+            displayUsers(filteredUsers); // Filtrelenmiş kullanıcıları gösterir.
+        }
+
+        function displayUsers(users) {
+            // Kullanıcıları tabloya ekler.
+            const tableBody = document.getElementById('usersTableBody');
+            tableBody.innerHTML = ''; // Tabloyu temizler.
+
+            if (users.length === 0) {
+                // Eğer kullanıcı yoksa, boş bir mesaj gösterir.
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <p>Kullanıcı bulunamadı</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            users.forEach(user => {
+                // Her kullanıcı için tabloya bir satır ekler.
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="user-name">
+                            <span>${user.firstName} ${user.lastName}</span>
+                        </div>
+                    </td>
+                    <td>${user.email}</td>
+                    <td>
+                        <span class="role-badge role-${user.role || 'user'}">
+                            <i class="fas fa-${user.role === 'shelter' ? 'house' : user.role === 'admin' ? 'crown' : 'user'}"></i>
+                            ${user.role === 'shelter' ? 'Barınak Sahibi' : user.role === 'admin' ? 'Admin' : 'Kullanıcı'}
+                        </span>
+                    </td>
+                    <td>
+                        ${user.role === 'shelter' ? `
+                            <button 
+                                class="deauthorize-btn" 
+                                onclick="deauthorizeUser('${user._id}')"
+                                ${user.isAdmin ? 'disabled' : ''}
+                            >
+                                <i class="fas fa-user-minus"></i>
+                                Yetkiyi Düşür
+                            </button>
+                        ` : `
+                            <button 
+                                class="authorize-btn" 
+                                onclick="authorizeUser('${user._id}')"
+                                ${user.isAdmin ? 'disabled' : ''}
+                            >
+                                <i class="fas fa-user-shield"></i>
+                                Yetkilendir
+                            </button>
+                        `}
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        async function authorizeUser(userId) {
+            // Kullanıcıyı 'shelter' rolüne yükseltir.
+            try {
+                const response = await fetch(`/api/users/${userId}/authorize`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ role: 'shelter' })
+                });
+
+                if (response.ok) {
+                    notifications.success('Kullanıcı başarıyla yetkilendirildi!', 'İşlem Başarılı');
+                    loadUsers(); // Kullanıcıları yeniden yükler.
+                } else {
+                    const error = await response.json();
+                    notifications.error(error.message || 'Yetkilendirme işlemi başarısız!', 'İşlem Başarısız');
+                }
+            } catch (error) {
+                console.error('Yetkilendirme hatası:', error);
+                notifications.error('Yetkilendirme işlemi sırasında bir hata oluştu!', 'Sistem Hatası');
+            }
+        }
+
+        async function deauthorizeUser(userId) {
+            // Kullanıcıyı 'user' rolüne düşürür.
+            if (!confirm('Bu kullanıcının yetkisini düşürmek istediğinizden emin misiniz?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/users/${userId}/authorize`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ role: 'user' })
+                });
+
+                if (response.ok) {
+                    notifications.success('Kullanıcı yetkisi başarıyla düşürüldü!', 'İşlem Başarılı');
+                    loadUsers(); // Kullanıcıları yeniden yükler.
+                } else {
+                    const error = await response.json();
+                    notifications.error(error.message || 'Yetki düşürme işlemi başarısız!', 'İşlem Başarısız');
+                }
+            } catch (error) {
+                console.error('Yetki düşürme hatası:', error);
+                notifications.error('Yetki düşürme işlemi sırasında bir hata oluştu!', 'Sistem Hatası');
+            }
+        }
+    </script>
+</body>
+</html>

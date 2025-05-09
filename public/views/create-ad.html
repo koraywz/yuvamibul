@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yeni İlan - PawFinder</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/navbar.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="../css/creat-ad.css">
+</head>
+<body>
+    <div class="container">
+        <div class="create-ad-container">
+            <h1>Yeni İlan Oluştur</h1>
+            <form id="createAdForm">
+                <div class="form-group">
+                    <label for="cins">Hayvan Cinsi</label>
+                    <input type="text" id="cins" name="cins" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="yas">Yaş</label>
+                    <input type="number" id="yas" name="yas" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="cinsiyet">Cinsiyet</label>
+                    <select id="cinsiyet" name="cinsiyet" class="form-control" required>
+                        <option value="Erkek">Erkek</option>
+                        <option value="Dişi">Dişi</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="saglik_durumu">Sağlık Durumu</label>
+                    <textarea id="saglik_durumu" name="saglik_durumu" class="form-control" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="karakter_ozellikleri">Karakter Özellikleri</label>
+                    <textarea id="karakter_ozellikleri" name="karakter_ozellikleri" class="form-control" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="bulundugu_yer">Bulunduğu Yer</label>
+                    <input type="text" id="bulundugu_yer" name="bulundugu_yer" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="iletisim_no">İletişim Numarası</label>
+                    <input type="tel" id="iletisim_no" name="iletisim_no" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="hikaye">Hikaye</label>
+                    <textarea id="hikaye" name="hikaye" class="form-control" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="resim_url">Resim URL</label>
+                    <input type="url" id="resim_url" name="resim_url" class="form-control" required>
+                </div>
+
+                <button type="submit" class="btn-primary">İlan Oluştur</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="notification-container"></div>
+
+    <script src="../js/navbar.js"></script>
+    <script src="../js/notification.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Kullanıcının token'ını localStorage'dan alıyoruz.
+            const token = localStorage.getItem('token');
+            if (!token) {
+                // Eğer token yoksa, kullanıcıya hata bildirimi gösteriyoruz ve giriş sayfasına yönlendiriyoruz.
+                notifications.error('Bu sayfaya erişim için giriş yapmanız gerekmektedir.', 'Yetkisiz Erişim');
+                setTimeout(() => {
+                    window.location.href = 'views/login.html';
+                }, 1500);
+                return;
+            }
+
+            try {
+                // Kullanıcının profil bilgilerini doğrulamak için API'ye istek gönderiyoruz.
+                const response = await fetch('/api/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}` // Token'ı yetkilendirme başlığına ekliyoruz.
+                    }
+                });
+                const userData = await response.json();
+
+                // Eğer kullanıcı barınak yetkisine sahip değilse, hata bildirimi gösteriyoruz ve ana sayfaya yönlendiriyoruz.
+                if (userData.role !== 'shelter') {
+                    notifications.error('Bu sayfaya erişim için barınak yetkiniz olması gerekiyor.', 'Yetkisiz Erişim');
+                    setTimeout(() => {
+                        window.location.href = 'views/index.html';
+                    }, 1500);
+                    return;
+                }
+            } catch (error) {
+                // API isteği sırasında bir hata oluşursa, kullanıcıyı ana sayfaya yönlendiriyoruz.
+                console.error('Yetki kontrolü hatası:', error);
+                window.location.href = 'views/index.html';
+            }
+        });
+
+        // Form gönderildiğinde çalışacak olay dinleyicisi.
+        document.getElementById('createAdForm').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Formun varsayılan gönderim davranışını engelliyoruz.
+
+            // Kullanıcının token'ını kontrol ediyoruz.
+            const token = localStorage.getItem('token');
+            if (!token) {
+                // Eğer token yoksa, kullanıcıyı giriş sayfasına yönlendiriyoruz.
+                window.location.href = 'views/login.html';
+                return;
+            }
+
+            // Form verilerini topluyoruz.
+            const formData = {
+                cins: document.getElementById('cins').value, // Hayvan cinsi
+                yas: parseInt(document.getElementById('yas').value), // Yaş
+                cinsiyet: document.getElementById('cinsiyet').value, // Cinsiyet
+                saglik_durumu: document.getElementById('saglik_durumu').value, // Sağlık durumu
+                karakter_ozellikleri: document.getElementById('karakter_ozellikleri').value, // Karakter özellikleri
+                bulundugu_yer: document.getElementById('bulundugu_yer').value, // Bulunduğu yer
+                iletisim_no: document.getElementById('iletisim_no').value, // İletişim numarası
+                hikaye: document.getElementById('hikaye').value, // Hikaye
+                resim_url: document.getElementById('resim_url').value, // Resim URL
+                olusturan: localStorage.getItem('email'), // İlanı oluşturan kişinin e-posta adresi
+            };
+
+            try {
+                // İlan oluşturmak için API'ye POST isteği gönderiyoruz.
+                const response = await fetch('/api/ads', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json', // JSON formatında veri gönderiyoruz.
+                        'Authorization': `Bearer ${token}` // Token'ı yetkilendirme başlığına ekliyoruz.
+                    },
+                    body: JSON.stringify(formData) // Form verilerini JSON formatına çeviriyoruz.
+                });
+
+                if (response.ok) {
+                    // Eğer istek başarılıysa, başarı bildirimi gösteriyoruz ve ilanlar sayfasına yönlendiriyoruz.
+                    notifications.success('İlan başarıyla oluşturuldu!', 'İşlem Başarılı');
+                    setTimeout(() => {
+                        window.location.href = '/views/ads-dashboard.html';
+                    }, 1500);
+                } else {
+                    // Eğer istek başarısızsa, hata mesajını alıp kullanıcıya gösteriyoruz.
+                    const error = await response.json();
+                    notifications.error(error.message || 'İlan oluşturulurken bir hata oluştu!', 'İşlem Başarısız');
+                }
+            } catch (error) {
+                // İstek sırasında bir hata oluşursa, kullanıcıya genel bir hata mesajı gösteriyoruz.
+                console.error('İlan oluşturma hatası:', error);
+                notifications.error('İlan oluşturulurken bir hata oluştu!', 'Sistem Hatası');
+            }
+        });
+    </script>
+</body>
+</html>

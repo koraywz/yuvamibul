@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Haritalar - PawFinder</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/navbar.css">
+    <link rel="stylesheet" href="../css/maps.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .map-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="maps-header">
+            <h1>Yakındaki Hayvan Barınaklarını Keşfedin</h1>
+            <p>İstanbul'daki hayvan barınaklarını harita üzerinde keşfedin ve onlara kolayca ulaşın.</p>
+        </div>
+        <div class="map-wrapper">
+            <iframe 
+                src="https://www.google.com/maps/d/u/0/embed?mid=17Q_4H8uPYTbBqMSe-qG8xzDfWdb04cc&ehbc=2E312F&noprof=1" 
+                width="100%" 
+                height="600" 
+                style="border:0;" 
+                allowfullscreen="" 
+                loading="lazy" 
+                referrerpolicy="no-referrer-when-downgrade">
+            </iframe>
+        </div>
+    </div>
+
+    <script src="../js/navbar.js"></script>
+</body>
+</html>

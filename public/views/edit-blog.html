@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Düzenle - PawFinder</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/navbar.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/edit-blog.css">
+</head>
+<body>
+    <div class="blog-detail-container">
+        <a id="backButton" href="/views/blog.html" class="back-button">
+            <i class="fas fa-arrow-left"></i> Blog Listesine Dön
+        </a>
+        </div>
+    <div class="container">
+        <div class="edit-blog-container">
+            <h1>Blog Yazısı Düzenle</h1>
+            <form id="editBlogForm">
+                <div class="form-group">
+                    <label for="title">Başlık</label>
+                    <input type="text" id="title" name="title" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Özet</label>
+                    <textarea id="description" name="description" class="form-control" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="content">İçerik</label>
+                    <textarea id="content" name="content" class="form-control" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="imageUrl">Resim URL</label>
+                    <input type="url" id="imageUrl" name="imageUrl" class="form-control" required>
+                </div>
+
+                <button type="submit" class="btn-primary">Blog Yazısını Güncelle</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="notification-container"></div>
+
+    <script src="../js/navbar.js"></script>
+    <script src="../js/notification.js"></script>
+    <script>
+        // URL'den blog ID'sini al
+        const urlParams = new URLSearchParams(window.location.search);
+        const blogNo = urlParams.get('blogNo'); // URL'deki "blogNo" parametresini alır.
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token'); // Kullanıcının token'ını localStorage'dan alır.
+            if (!token) {
+                // Eğer token yoksa, kullanıcıyı giriş yapmaya yönlendirir.
+                notifications.error('Bu sayfaya erişim için giriş yapmanız gerekmektedir.', 'Yetkisiz Erişim');
+                setTimeout(() => {
+                    window.location.href = '/views/login.html'; // Giriş sayfasına yönlendirme.
+                }, 1500);
+                return;
+            }
+
+            try {
+                // Kullanıcı profil bilgilerini al
+                const response = await fetch('/api/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}` // Token'ı yetkilendirme başlığına ekler.
+                    }
+                });
+                const userData = await response.json();
+
+                if (userData.isAdmin !== 1) {
+                    // Eğer kullanıcı admin değilse, ana sayfaya yönlendirir.
+                    notifications.error('Bu sayfaya erişim için admin yetkiniz olması gerekiyor.', 'Yetkisiz Erişim');
+                    setTimeout(() => {
+                        window.location.href = '/'; // Ana sayfaya yönlendirme.
+                    }, 1500);
+                    return;
+                }
+
+                if (!blogNo) {
+                    // Eğer blog ID'si yoksa, blog listesi sayfasına yönlendirir.
+                    window.location.href = '/views/blog.html';
+                    return;
+                }
+
+                // Blog bilgilerini API'den al ve form alanlarını doldur
+                const blogResponse = await fetch(`/api/blogs/${blogNo}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}` // Token'ı yetkilendirme başlığına ekler.
+                    }
+                });
+
+                if (blogResponse.ok) {
+                    const blog = await blogResponse.json();
+                    // Blog bilgilerini form alanlarına yerleştirir.
+                    document.getElementById('title').value = blog.title;
+                    document.getElementById('description').value = blog.description;
+                    document.getElementById('content').value = blog.content;
+                    document.getElementById('imageUrl').value = blog.imageUrl;
+                } else {
+                    // Eğer blog bilgileri alınamazsa, blog listesi sayfasına yönlendirir.
+                    window.location.href = '/views/blog.html';
+                }
+            } catch (error) {
+                // Hata durumunda blog listesi sayfasına yönlendirir.
+                console.error('Hata:', error);
+                window.location.href = '/views/blog.html';
+            }
+
+            // Form gönderimi işlemi
+            const form = document.getElementById('editBlogForm');
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault(); // Formun varsayılan gönderim davranışını engeller.
+
+                // Form verilerini al
+                const formData = {
+                    title: document.getElementById('title').value,
+                    description: document.getElementById('description').value,
+                    content: document.getElementById('content').value,
+                    imageUrl: document.getElementById('imageUrl').value
+                };
+
+                try {
+                    // Blog güncelleme isteği gönder
+                    const response = await fetch(`/api/blogs/${blogNo}`, {
+                        method: 'PUT', // HTTP PUT yöntemi ile güncelleme isteği.
+                        headers: {
+                            'Content-Type': 'application/json', // JSON formatında veri gönderileceğini belirtir.
+                            'Authorization': `Bearer ${token}` // Token'ı yetkilendirme başlığına ekler.
+                        },
+                        body: JSON.stringify(formData) // Form verilerini JSON formatına çevirir.
+                    });
+
+                    if (response.ok) {
+                        // Güncelleme başarılıysa, kullanıcıya bildirim göster ve blog listesi sayfasına yönlendir.
+                        notifications.success('Başarılı', 'Blog başarıyla güncellendi.');
+                        setTimeout(() => {
+                            window.location.href = '/views/blog.html';
+                        }, 2000);
+                    } else {
+                        // Güncelleme başarısızsa hata mesajını al ve göster.
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Blog güncellenemedi');
+                    }
+                } catch (error) {
+                    // Hata durumunda kullanıcıya bildirim göster.
+                    console.error('Blog güncellenirken hata:', error);
+                    notifications.error('Hata', error.message || 'Blog güncellenirken bir hata oluştu.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

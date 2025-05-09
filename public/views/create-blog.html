@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Oluştur - PawFinder</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/navbar.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/create-blog.css">
+</head>
+<body>
+    <div class="blog-detail-container">
+        <a id="backButton" href="/views/blog.html" class="back-button">
+            <i class="fas fa-arrow-left"></i> Blog Listesine Dön
+        </a>
+        </div>
+        
+    <div class="container">
+        <div class="create-blog-container">
+            <h1>Yeni Blog Yazısı</h1>
+            <form id="createBlogForm" class="create-blog-form">
+                <div class="form-group">
+                    <label for="title">Başlık</label>
+                    <input type="text" id="title" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Kısa Açıklama</label>
+                    <textarea id="description" rows="3" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="content">İçerik</label>
+                    <textarea id="content" rows="10" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="imageUrl">Görsel URL</label>
+                    <input type="url" id="imageUrl" required>
+                    <img id="imagePreview" class="preview-image" alt="Blog görseli önizleme">
+                </div>
+
+                <button type="submit" class="submit-btn">Blog Yazısı Oluştur</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="notification-container"></div>
+
+    <script src="../js/navbar.js"></script>
+    <script src="../js/notification.js"></script>
+    <script>
+        let userData = null; // Kullanıcı bilgilerini saklamak için global bir değişken
+
+        // Sayfa yüklendiğinde admin kontrolü yap
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token'); // Kullanıcı token'ını localStorage'dan al
+            if (!token) {
+                // Eğer token yoksa giriş sayfasına yönlendir
+                window.location.href = '/views/login.html';
+                return;
+            }
+
+            try {
+                // Kullanıcı bilgilerini almak için API'ye istek gönder
+                const response = await fetch('/api/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}` // Yetkilendirme başlığı ekle
+                    }
+                });
+                userData = await response.json(); // Kullanıcı bilgilerini global değişkene ata
+
+                if (!userData.isAdmin) {
+                    // Eğer kullanıcı admin değilse giriş sayfasına yönlendir
+                    window.location.href = '/views/login.html';
+                    return;
+                }
+            } catch (error) {
+                console.error('Yetki kontrolü hatası:', error); // Hata durumunda konsola yazdır
+                window.location.href = '/views/login.html'; // Hata durumunda giriş sayfasına yönlendir
+                return;
+            }
+        });
+
+        // Görsel URL'si değiştiğinde önizleme yap
+        document.getElementById('imageUrl').addEventListener('input', function(e) {
+            const preview = document.getElementById('imagePreview'); // Görsel önizleme elemanını seç
+            const url = e.target.value; // Kullanıcının girdiği URL'yi al
+            
+            if (url) {
+                // Eğer URL varsa görseli göster ve URL'yi kaynak olarak ayarla
+                preview.style.display = 'block';
+                preview.src = url;
+            } else {
+                // Eğer URL boşsa görseli gizle
+                preview.style.display = 'none';
+            }
+        });
+
+        // Form gönderildiğinde blog oluşturma işlemini yap
+        document.getElementById('createBlogForm').addEventListener('submit', async (e) => {
+            e.preventDefault(); // Formun varsayılan gönderim davranışını engelle
+
+            // Form verilerini bir nesneye ata
+            const formData = {
+                title: document.getElementById('title').value, // Başlık
+                description: document.getElementById('description').value, // Kısa açıklama
+                content: document.getElementById('content').value, // İçerik
+                imageUrl: document.getElementById('imageUrl').value, // Görsel URL
+                olusturan: `${userData.firstName} ${userData.lastName}` // Blog yazısını oluşturan kişi
+            };
+
+            try {
+                // Blog oluşturmak için API'ye POST isteği gönder
+                const response = await fetch('/api/blogs', {
+                    method: 'POST', // HTTP metodu POST
+                    headers: {
+                        'Content-Type': 'application/json', // İçerik türü JSON
+                        'Authorization': `Bearer ${localStorage.getItem('token')}` // Yetkilendirme başlığı ekle
+                    },
+                    body: JSON.stringify(formData) // Form verilerini JSON formatında gönder
+                });
+
+                if (response.ok) {
+                    // Eğer istek başarılıysa başarı mesajı göster
+                    notifications.success('Blog yazısı başarıyla oluşturuldu!', 'İşlem Başarılı');
+                    setTimeout(() => {
+                        // 1.5 saniye sonra blog listesi sayfasına yönlendir
+                        window.location.href = '/views/blog';
+                    }, 1500);
+                } else {
+                    // Eğer istek başarısızsa hata mesajını göster
+                    const error = await response.json();
+                    notifications.error(error.message || 'Blog yazısı oluşturulurken bir hata oluştu', 'İşlem Başarısız');
+                }
+            } catch (error) {
+                console.error('Hata:', error); // Hata durumunda konsola yazdır
+                notifications.error('Bir hata oluştu. Lütfen tekrar deneyin.', 'Sistem Hatası'); // Genel hata mesajı göster
+            }
+        });
+    </script>
+</body>
+</html>
